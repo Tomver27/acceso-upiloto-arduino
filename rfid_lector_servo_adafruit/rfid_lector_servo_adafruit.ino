@@ -6,6 +6,7 @@
 #define PN532_IRQ 2
 #define PN532_RESET -1
 
+
 #define LED_VERDE 6
 #define LED_ROJO 7
 #define PIN_SERVO 3
