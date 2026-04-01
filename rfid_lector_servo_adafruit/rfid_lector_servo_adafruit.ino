@@ -12,69 +12,78 @@
 
 #define PIN_PARLANTE 8
 
-#define DO   262
-#define RE   294
-#define MI   330
-#define FA   349
-#define SOL  392
-#define LA   440
-#define SI   494
-#define DO2  523
+#define DO 262
+#define RE 294
+#define MI 330
+#define FA 349
+#define SOL 392
+#define LA 440
+#define SI 494
+#define DO2 523
 
 // Melodía: notas y duraciones (ms)
-int melodia[]    = { DO, RE, MI, FA, SOL, LA, SI, DO2 };
-int duraciones[] = { 400, 400, 400, 400, 400, 400, 400, 600 };
-int totalNotas   = 8;
+int melodia[] = {DO, RE, MI, FA, SOL, LA, SI, DO2};
+int duraciones[] = {400, 400, 400, 400, 400, 400, 400, 600};
+int totalNotas = 8;
 
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 Servo miServo;
 
 String uidValido = "4606f460";
-String BufferID   = "";
+String BufferID = "";
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   SPI.begin();
   nfc.begin();
   pinMode(LED_VERDE, OUTPUT);
   pinMode(LED_ROJO, OUTPUT);
   pinMode(PIN_PARLANTE, OUTPUT);
-  
+
   miServo.attach(PIN_SERVO);
   miServo.write(0);
 
   uint32_t versiondata = nfc.getFirmwareVersion();
-  if (!versiondata) {
+  if (!versiondata)
+  {
     Serial.println("ERROR: PN532 no encontrado");
-    while (1);
+    while (1)
+      ;
   }
   Serial.println("PN532 detectado OK!");
   nfc.SAMConfig();
 }
 
-void loop() {
+void loop()
+{
   uint8_t uid[7];
   uint8_t uidLength;
 
   // Espera hasta 1 segundo por una tarjeta
   bool cardFound = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
 
-  if (cardFound) {
+  if (cardFound)
+  {
     BufferID = "";
 
     Serial.print("Card UID: ");
-    for (uint8_t i = 0; i < uidLength; i++) {
-      if (uid[i] < 0x10) BufferID += "0";
+    for (uint8_t i = 0; i < uidLength; i++)
+    {
+      if (uid[i] < 0x10)
+        BufferID += "0";
       BufferID += String(uid[i], HEX);
     }
     Serial.println(BufferID);
 
-    if (BufferID == uidValido) {
+    if (BufferID == uidValido)
+    {
       Serial.println("ACCESO PERMITIDO");
       digitalWrite(LED_VERDE, HIGH);
-      digitalWrite(LED_ROJO,  LOW);
+      digitalWrite(LED_ROJO, LOW);
       miServo.detach();
-      for (int i = 0; i < totalNotas; i++) {
+      for (int i = 0; i < totalNotas; i++)
+      {
         tone(PIN_PARLANTE, melodia[i], duraciones[i]);
         delay(duraciones[i] + 10);
       }
@@ -84,14 +93,23 @@ void loop() {
       delay(3000);
       miServo.write(0);
       digitalWrite(LED_VERDE, LOW);
-    } else {
+    }
+    else
+    {
       Serial.println("ACCESO DENEGADO");
       digitalWrite(LED_VERDE, LOW);
-      digitalWrite(LED_ROJO,  HIGH);
-      delay(2000);
-      digitalWrite(LED_ROJO,  LOW);
+      digitalWrite(LED_ROJO, HIGH);
+      miServo.detach();
+      tone(PIN_PARLANTE, 300, 500);
+      delay(300);
+      tone(PIN_PARLANTE, 200, 500);
+      delay(300);
+      noTone(PIN_PARLANTE);
+      miServo.attach(PIN_SERVO);
+      delay(800);
+      digitalWrite(LED_ROJO, LOW);
     }
 
-    delay(1000); // Pausa para evitar lecturas duplicadas
+    delay(1000);
   }
 }
