@@ -8,6 +8,7 @@
 
 
 #define LED_VERDE 6
+
 #define LED_ROJO 7
 #define PIN_SERVO 3
 
